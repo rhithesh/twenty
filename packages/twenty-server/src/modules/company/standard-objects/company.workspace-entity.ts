@@ -1,3 +1,5 @@
+import { Address } from 'nodemailer/lib/mailer';
+
 import { Relation } from 'src/engine/workspace-manager/workspace-sync-metadata/interfaces/relation.interface';
 
 import { CurrencyMetadata } from 'src/engine/metadata-modules/field-metadata/composite-types/currency.composite-type';
@@ -22,6 +24,8 @@ import { WorkspaceField } from 'src/engine/twenty-orm/decorators/workspace-field
 import { WorkspaceIsNullable } from 'src/engine/twenty-orm/decorators/workspace-is-nullable.decorator';
 import { WorkspaceIsSystem } from 'src/engine/twenty-orm/decorators/workspace-is-system.decorator';
 import { WorkspaceRelation } from 'src/engine/twenty-orm/decorators/workspace-relation.decorator';
+import { WorkspaceIsDeprecated } from 'src/engine/twenty-orm/decorators/workspace-is-deprecated.decorator';
+import { WorkspaceJoinColumn } from 'src/engine/twenty-orm/decorators/workspace-join-column.decorator';
 
 @WorkspaceEntity({
   standardId: STANDARD_OBJECT_IDS.company,
@@ -52,15 +56,6 @@ export class CompanyWorkspaceEntity extends BaseWorkspaceEntity {
   domainName?: string;
 
   @WorkspaceField({
-    standardId: COMPANY_STANDARD_FIELD_IDS.address,
-    type: FieldMetadataType.TEXT,
-    label: 'Address',
-    description: 'The company address',
-    icon: 'IconMap',
-  })
-  address: string;
-
-  @WorkspaceField({
     standardId: COMPANY_STANDARD_FIELD_IDS.employees,
     type: FieldMetadataType.NUMBER,
     label: 'Employees',
@@ -68,7 +63,7 @@ export class CompanyWorkspaceEntity extends BaseWorkspaceEntity {
     icon: 'IconUsers',
   })
   @WorkspaceIsNullable()
-  employees: number;
+  employees: number | null;
 
   @WorkspaceField({
     standardId: COMPANY_STANDARD_FIELD_IDS.linkedinLink,
@@ -78,7 +73,7 @@ export class CompanyWorkspaceEntity extends BaseWorkspaceEntity {
     icon: 'IconBrandLinkedin',
   })
   @WorkspaceIsNullable()
-  linkedinLink: LinkMetadata;
+  linkedinLink: LinkMetadata | null;
 
   @WorkspaceField({
     standardId: COMPANY_STANDARD_FIELD_IDS.xLink,
@@ -88,7 +83,7 @@ export class CompanyWorkspaceEntity extends BaseWorkspaceEntity {
     icon: 'IconBrandX',
   })
   @WorkspaceIsNullable()
-  xLink: LinkMetadata;
+  xLink: LinkMetadata | null;
 
   @WorkspaceField({
     standardId: COMPANY_STANDARD_FIELD_IDS.annualRecurringRevenue,
@@ -99,7 +94,29 @@ export class CompanyWorkspaceEntity extends BaseWorkspaceEntity {
     icon: 'IconMoneybag',
   })
   @WorkspaceIsNullable()
-  annualRecurringRevenue: CurrencyMetadata;
+  annualRecurringRevenue: CurrencyMetadata | null;
+
+  @WorkspaceField({
+    standardId: COMPANY_STANDARD_FIELD_IDS.address_deprecated,
+    type: FieldMetadataType.TEXT,
+    label: 'Address (deprecated) ',
+    description:
+      'Address of the company - deprecated in favor of new address field',
+    icon: 'IconMap',
+  })
+  @WorkspaceIsDeprecated()
+  @WorkspaceIsNullable()
+  address_old: string;
+
+  @WorkspaceField({
+    standardId: COMPANY_STANDARD_FIELD_IDS.address,
+    type: FieldMetadataType.ADDRESS,
+    label: 'Address',
+    description: 'Address of the company',
+    icon: 'IconMap',
+  })
+  @WorkspaceIsNullable()
+  address: Address;
 
   @WorkspaceField({
     standardId: COMPANY_STANDARD_FIELD_IDS.idealCustomerProfile,
@@ -121,7 +138,7 @@ export class CompanyWorkspaceEntity extends BaseWorkspaceEntity {
   })
   @WorkspaceIsSystem()
   @WorkspaceIsNullable()
-  position: number;
+  position: number | null;
 
   // Relations
   @WorkspaceRelation({
@@ -143,13 +160,15 @@ export class CompanyWorkspaceEntity extends BaseWorkspaceEntity {
     description:
       'Your team member responsible for managing the company account',
     icon: 'IconUserCircle',
-    joinColumn: 'accountOwnerId',
     inverseSideTarget: () => WorkspaceMemberWorkspaceEntity,
     inverseSideFieldKey: 'accountOwnerForCompanies',
     onDelete: RelationOnDeleteAction.SET_NULL,
   })
   @WorkspaceIsNullable()
-  accountOwner: Relation<WorkspaceMemberWorkspaceEntity>;
+  accountOwner: Relation<WorkspaceMemberWorkspaceEntity> | null;
+
+  @WorkspaceJoinColumn('accountOwner')
+  accountOwnerId: string | null;
 
   @WorkspaceRelation({
     standardId: COMPANY_STANDARD_FIELD_IDS.activityTargets,
